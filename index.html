@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Днюха Дьулустаана</title>
+<meta name="description" content="Поздравление для одногруппника: попади мячом в кольцо — открой поздравление">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Onest:wght@400;500;700&family=Share+Tech+Mono&display=swap">
+<style>
+  /* Одна тема — вечерний спортзал, цвета заданы явно */
+  :root{
+    --night:#0B0E18;
+    --court:#121829;
+    --panel:#171F35;
+    --line:rgba(242,240,233,.1);
+    --jersey:#3A66F2;     /* синяя окантовка формы */
+    --ball:#F2742B;       /* мяч */
+    --chalk:#F2F0E9;
+    --muted:#98A1B8;
+    --led:#FFB547;        /* табло */
+    --display:"Russo One","Arial Black",system-ui,sans-serif;
+    --body:"Onest","Segoe UI",system-ui,sans-serif;
+    --mono:"Share Tech Mono",ui-monospace,"Consolas",monospace;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--night);color:var(--chalk);font:400 16px/1.6 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  img{max-width:100%;display:block}
+  p{margin:0}
+  button{font:inherit}
+  :focus-visible{outline:2px solid var(--led);outline-offset:3px;border-radius:6px}
+  .wrap{max-width:1080px;margin-inline:auto;padding-inline:18px}
+  h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;line-height:1.15;text-wrap:balance}
+  .tag{font:700 11px/1.5 var(--body);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+
+  /* ---------- HEADER ---------- */
+  .top{padding-block:22px 16px;display:grid;gap:10px}
+  .top .tag{color:var(--ball)}
+  .title{font-size:clamp(34px,10vw,64px);line-height:1.1}
+  .title span{color:var(--ball)}
+  .lead{color:var(--muted);max-width:52ch;font-size:15px}
+
+  /* ---------- ARENA ---------- */
+  .arena{display:grid;gap:18px;padding-bottom:28px}
+  .board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#05070C;border:1px solid #232C45;border-radius:10px;overflow:hidden}
+  .board div{padding:10px 8px 8px;text-align:center;display:grid;gap:2px}
+  .board div + div{border-left:1px solid #1C2338}
+  .board b{font:400 clamp(26px,8vw,38px)/1.1 var(--mono);color:var(--led);text-shadow:0 0 12px rgba(255,181,71,.45);font-variant-numeric:tabular-nums}
+  .board span{font:700 10px/1.3 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .stage{position:relative;width:100%;max-width:460px;margin-inline:auto;aspect-ratio:2/3;border-radius:14px;overflow:hidden;border:1px solid #232C45;background:var(--court);touch-action:none;user-select:none;-webkit-user-select:none}
+  canvas#game{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+  canvas#game:active{cursor:grabbing}
+  .hint{position:absolute;left:12px;right:12px;top:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+  .pill{background:rgba(5,7,12,.72);border:1px solid #2A3452;border-radius:40px;padding:5px 11px;font-size:12px;line-height:1.3;color:var(--chalk);backdrop-filter:blur(4px)}
+  .pill b{color:var(--led);font-weight:700}
+  .shout{position:absolute;left:0;right:0;top:34%;text-align:center;font:400 clamp(26px,9vw,40px)/1.15 var(--display);color:var(--chalk);text-shadow:0 3px 0 #000,0 0 24px rgba(242,116,43,.6);pointer-events:none;opacity:0;transform:scale(.8);transition:opacity .2s,transform .25s;padding-inline:16px}
+  .shout.on{opacity:1;transform:scale(1)}
+  .shout small{display:block;font:500 15px/1.4 var(--body);color:var(--muted);text-shadow:0 1px 4px #000;margin-top:6px}
+  .controls{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+  .btn{appearance:none;border:1px solid var(--ball);background:var(--ball);color:#1A0E05;font:700 14px/1.2 var(--body);padding:12px 18px;border-radius:40px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:transform .12s,filter .12s}
+  .btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+  .btn--ghost{background:transparent;color:var(--chalk);border-color:#39456A}
+  .btn--ghost:hover{border-color:var(--chalk)}
+  .keys{text-align:center;font-size:12.5px;color:var(--muted)}
+  kbd{font:12px/1 var(--mono);border:1px solid #39456A;border-bottom-width:2px;border-radius:4px;padding:2px 5px;color:var(--chalk)}
+
+  /* ---------- MODAL ---------- */
+  .modal{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:18px;background:rgba(3,5,10,.78);backdrop-filter:blur(6px)}
+  .card-open{width:min(440px,100%);max-height:calc(100vh - 36px);overflow:auto;background:var(--chalk);color:#141824;border-radius:16px;display:grid;animation:pop .35s cubic-bezier(.2,1.4,.4,1) both}
+  .card-open figure{margin:0;position:relative;aspect-ratio:4/3;overflow:hidden;max-width:100%}
+  .card-open figure img{width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+  .card-open figcaption{position:absolute;left:0;right:0;bottom:0;padding:26px 16px 10px;background:linear-gradient(transparent,rgba(0,0,0,.72));color:#fff;font-size:13px;line-height:1.35}
+  .card-open .body{padding:18px 20px 20px;display:grid;gap:12px}
+  .card-open .num{font:700 11px/1.4 var(--body);letter-spacing:.18em;text-transform:uppercase;color:#C24F12}
+  .card-open h3{font-size:26px;line-height:1.15}
+  .card-open p{font-size:16px;line-height:1.6}
+  .card-open .from{font-size:13px;color:#5B6275}
+  .card-open .btn{justify-self:start}
+  @keyframes pop{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:none}}
+
+  /* ---------- LOCKER (все поздравления) ---------- */
+  .locker{padding-block:30px 40px;border-top:1px solid var(--line)}
+  .locker__head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px;margin-bottom:18px}
+  .locker__head h2{font-size:clamp(26px,7vw,40px)}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
+  .wish{background:var(--panel);border:1px solid #232C45;border-radius:14px;overflow:hidden;display:grid;grid-template-rows:auto 1fr}
+  .wish figure{margin:0;aspect-ratio:16/10;overflow:hidden;position:relative;max-width:100%}
+  .wish figure img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;transition:filter .5s,transform .6s}
+  .wish .body{padding:14px 16px 16px;display:grid;gap:8px;align-content:start}
+  .wish .num{font:700 11px/1.4 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--ball)}
+  .wish h3{font-size:20px;line-height:1.2}
+  .wish p{font-size:14.5px;line-height:1.6;color:#C9CEDB}
+  .wish figcaption{position:absolute;left:0;right:0;bottom:0;padding:20px 12px 8px;background:linear-gradient(transparent,rgba(0,0,0,.7));font-size:12px;line-height:1.35;color:#fff}
+  .wish.locked figure img{filter:blur(14px) grayscale(.6) brightness(.55);transform:scale(1.15)}
+  .wish.locked figcaption{display:none}
+  .wish.locked .text{filter:blur(5px);user-select:none}
+  .lock{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:4px;text-align:center;font:400 15px/1.3 var(--display);color:var(--chalk);text-shadow:0 2px 6px #000}
+  .lock small{font:500 12px/1.3 var(--body);color:var(--muted)}
+  .wish:not(.locked) .lock{display:none}
+
+  .sign{padding-block:34px 48px;text-align:center;display:grid;gap:8px;justify-items:center;border-top:1px solid var(--line)}
+  .sign h2{font-size:clamp(26px,8vw,44px)}
+  .sign p{color:var(--muted);max-width:44ch}
+
+  #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60}
+
+  @media (min-width:880px){
+    .wrap{padding-inline:36px}
+    .top{padding-block:0}
+    .arena{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"top stage" "side stage";align-content:start;align-items:start;gap:28px 48px;padding-block:32px 40px}
+    .top{grid-area:top;align-self:end}
+    .arena__side{grid-area:side}
+    .stage{grid-area:stage;width:min(460px,calc((100vh - 64px) * 2 / 3));margin:0}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<main class="wrap arena">
+<header class="top">
+  <span class="tag">Физкультурный · днюха в группе</span>
+  <h1 class="title">С днём рождения, <span>Дьулустаан!</span></h1>
+  <p class="lead">Группа спрятала 5 поздравлений. Забрось мяч в кольцо — откроется следующее. Всё честно, как на зачёте.</p>
+</header>
+
+  <div class="stage" id="stage">
+    <canvas id="game" tabindex="0" aria-label="Игра: потяни от мяча назад и отпусти, чтобы бросить в кольцо"></canvas>
+    <div class="hint"><span class="pill" id="lvl">Бросок <b>1</b> из 5</span><span class="pill" id="tip">Тяни назад и отпускай</span></div>
+    <div class="shout" id="shout" aria-live="polite"></div>
+  </div>
+  <div class="arena__side" style="display:grid;gap:14px">
+    <div class="board" role="status" aria-label="Табло">
+      <div><b id="sHits">0/5</b><span>Попадания</span></div>
+      <div><b id="sShots">0</b><span>Броски</span></div>
+      <div><b id="sAcc">—</b><span>Точность</span></div>
+    </div>
+    <div class="controls">
+      <button class="btn btn--ghost" id="skip" type="button">Открыть всё без игры</button>
+      <button class="btn btn--ghost" id="reset" type="button">Начать сезон заново</button>
+    </div>
+    <p class="keys">С клавиатуры: <kbd>←</kbd><kbd>→</kbd> угол, <kbd>↑</kbd><kbd>↓</kbd> сила, <kbd>Пробел</kbd> бросок</p>
+  </div>
+</main>
+
+<section class="wrap locker" aria-labelledby="lockerTitle">
+  <div class="locker__head">
+    <div style="display:grid;gap:6px">
+      <span class="tag">Шкафчик с поздравлениями</span>
+      <h2 id="lockerTitle">Открыто: <span id="openCount">0</span> из 5</h2>
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<footer class="wrap sign">
+  <span class="tag">С любовью и крепатурой</span>
+  <h2>Твоя группа 🤙</h2>
+  <p>Староста, капитан, тот, кто вечно забывает форму, и все остальные. Не пропускай день ног.</p>
+</footer>
+
+<script>
+(() => {
+  const NAME = "Дьулустаан";
+
+  // ——— Поздравления: текст от одногруппников ———
+  const WISHES = [
+    { img: "img/photo-01.jpg", cap: "У мамонтов: пришёл на пары с мячом вместо тетради",
+      title: "С днюхой, бро! 🏀",
+      text: `${NAME}, с днём рождения! Желаю, чтобы зачётка закрывалась так же легко, как ты закрываешь сверху. Автоматы — как штрафные: без промахов. Имба, база, наш человек.` },
+    { img: "img/photo-04.jpg", cap: "Финиш трёшки. Улыбаемся, чтобы не заплакать",
+      title: "«Ещё кружок!»",
+      text: "Пусть дыхалки хватает и на кросс, и на сессию. А фраза «ещё кружок» звучит только тогда, когда ты сам этого хочешь. Ну или когда препод по лёгкой в хорошем настроении." },
+    { img: "img/photo-05.jpg", cap: "Раздевалка после трени. Запах — легендарный",
+      title: "Вайб раздевалки",
+      text: "Желаем, чтобы жизнь была как раздевалка после победы: шумно, весело и все свои. Команда тебя любит — даже когда ты опаздываешь «на пять минуточек» и приходишь к концу разминки." },
+    { img: "img/photo-03.jpg", cap: "Кубок наш. Вопросы?",
+      title: "MVP группы",
+      text: "Официально: ты MVP нашего потока. Кубок за лучший жест 🤙 на селфи тоже твой. Пусть связки будут крепкие, крепатура — только приятная, а стипендия — повышенная." },
+    { img: "img/photo-02.jpg", cap: "Бросок в прыжке. Физика в шоке, мяч в кольце",
+      title: "Дальше — только данки",
+      text: "Главное пожелание: никогда не пропускать день ног. Ни в зале, ни в жизни 😂 Пусть каждый бросок — в кольцо, каждая цель — закрыта, а мечты сбываются быстрее, чем ты бегаешь челнок. С днём рождения, легенда!" }
+  ];
+  const MISS = [
+    ["Кирпич 🧱", "Физрук уже достаёт свисток"],
+    ["Мимо!", "Как зачёт с третьей попытки — почти"],
+    ["Airball", "Зато красиво летел"],
+    ["Не зашло", "Минус вайб, плюс ещё кружок"],
+    ["Штанга!", "Стоп, это не футбол. Бросай ещё"]
+  ];
+  const HIT = ["Swish! 🔥", "Чисто!", "Имба!", "Три очка! (нет)", "Легенда!"];
+
+  const $ = id => document.getElementById(id);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ——— Прогресс (на этом устройстве) ———
+  const LS = "dyulus-bday-v1";
+  let state = { hits: 0, shots: 0, free: false };
+  try { Object.assign(state, JSON.parse(localStorage.getItem(LS)) || {}); } catch {}
+  const save = () => { try { localStorage.setItem(LS, JSON.stringify(state)); } catch {} };
+
+  // ——— Шкафчик ———
+  const grid = $("grid");
+  WISHES.forEach((w, i) => {
+    const el = document.createElement("article");
+    el.className = "wish locked"; el.id = "wish" + i;
+    el.innerHTML = `<figure><img src="${w.img}" alt="" loading="lazy"><figcaption></figcaption>
+      <div class="lock">🔒 Попадание №${i + 1}<small>Забрось мяч, чтобы открыть</small></div></figure>
+      <div class="body"><span class="num">Поздравление ${i + 1} из 5</span><div class="text"><h3></h3><p></p></div></div>`;
+    el.querySelector("figcaption").textContent = w.cap;
+    el.querySelector("h3").textContent = w.title;
+    el.querySelector("p").textContent = w.text;
+    el.querySelector(".text").setAttribute("aria-hidden", "true");
+    grid.append(el);
+  });
+  function paintLocker() {
+    WISHES.forEach((_, i) => {
+      const el = $("wish" + i), open = i < state.hits;
+      el.classList.toggle("locked", !open);
+      el.querySelector(".text").setAttribute("aria-hidden", String(!open));
+    });
+    $("openCount").textContent = Math.min(state.hits, 5);
+  }
+  function paintBoard() {
+    $("sHits").textContent = Math.min(state.hits, 5) + "/5";
+    $("sShots").textContent = state.shots;
+    $("sAcc").textContent = state.shots ? Math.round(Math.min(state.hits, state.shots) / state.shots * 100) + "%" : "—";
+    const n = Math.min(state.hits + 1, 5);
+    $("lvl").innerHTML = state.hits >= 5 ? "Свободная игра" : `Бросок <b>${n}</b> из 5`;
+    $("tip").textContent = ["Тяни назад и отпускай", "Прицел короче", "Ещё короче", "Кольцо поехало", "Финал: кольцо летает"][Math.min(state.hits, 4)];
+    if (state.hits >= 5) $("tip").textContent = "Сезон закрыт 🏆";
+  }
+
+  // ——— Модалка с поздравлением ———
+  let modal = null;
+  function openCard(i, final) {
+    closeCard();
+    const w = WISHES[i];
+    modal = document.createElement("div");
+    modal.className = "modal"; modal.setAttribute("role", "dialog"); modal.setAttribute("aria-modal", "true");
+    modal.innerHTML = `<div class="card-open"><figure><img src="${w.img}" alt=""><figcaption></figcaption></figure>
+      <div class="body"><span class="num"></span><h3></h3><p></p><span class="from">— твоя группа</span>
+      <button class="btn" type="button"></button></div></div>`;
+    modal.querySelector("figcaption").textContent = w.cap;
+    modal.querySelector(".num").textContent = final ? "Поздравление 5 из 5 · сезон закрыт" : `Поздравление ${i + 1} из 5`;
+    modal.querySelector("h3").textContent = w.title;
+    modal.querySelector("p").textContent = w.text;
+    const b = modal.querySelector("button");
+    b.textContent = final ? "Смотреть все поздравления" : "Бросать дальше →";
+    b.onclick = () => { closeCard(); if (final) $("lockerTitle").scrollIntoView({ behavior: reduce ? "auto" : "smooth" }); else $("game").focus(); };
+    modal.addEventListener("click", e => { if (e.target === modal) closeCard(); });
+    document.body.append(modal);
+    b.focus();
+  }
+  function closeCard() { if (modal) { modal.remove(); modal = null; } }
+  addEventListener("keydown", e => { if (e.key === "Escape") closeCard(); });
+
+  // ——— Конфетти ———
+  const fx = $("fx"), fc = fx.getContext("2d");
+  let parts = [], fxRun = false;
+  function confetti(x, y, n = 120) {
+    if (reduce) return;
+    const dpr = devicePixelRatio || 1;
+    fx.width = innerWidth * dpr; fx.height = innerHeight * dpr; fc.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const colors = ["#F2742B", "#3A66F2", "#F2F0E9", "#FFB547"];
+    for (let i = 0; i < n; i++) parts.push({ x, y, vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4,
+      w: 5 + Math.random() * 6, h: 3 + Math.random() * 4, a: Math.random() * 6, va: (Math.random() - .5) * .4,
+      c: colors[i % colors.length], life: 160 });
+    if (!fxRun) { fxRun = true; requestAnimationFrame(fxFrame); }
+  }
+  function fxFrame() {
+    fc.clearRect(0, 0, innerWidth, innerHeight);
+    parts = parts.filter(p => p.life-- > 0 && p.y < innerHeight + 20);
+    for (const p of parts) {
+      p.vy += .32; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.a += p.va;
+      fc.save(); fc.translate(p.x, p.y); fc.rotate(p.a); fc.fillStyle = p.c; fc.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); fc.restore();
+    }
+    if (parts.length) requestAnimationFrame(fxFrame); else { fxRun = false; fc.clearRect(0, 0, innerWidth, innerHeight); }
+  }
+
+  // ——— Игра ———
+  const W = 400, H = 600, FLOOR = 584, G = 0.32, R = 14;
+  const cv = $("game"), cx = cv.getContext("2d");
+  const player = new Image(); player.src = "img/player.png";
+  const PS = 330 / 870;                         // масштаб спрайта
+  const PX = 14, PY = FLOOR - 330 - 4;          // где стоит персонаж
+  const HAND = { x: PX + 352 * PS, y: PY + 28 * PS };
+
+  const hoop = { x: 318, y: 230, baseX: 318, baseY: 230, t: 0 };
+  const ball = { x: 0, y: 0, vx: 0, vy: 0, spin: 0, live: false, scored: false, rest: 0, touched: false };
+  let aim = null, jump = 0, net = 0, shoutT = null;
+  let kbAngle = -0.95, kbPower = 12.5;
+
+  function fit() {
+    const dpr = Math.min(devicePixelRatio || 1, 2), r = cv.getBoundingClientRect();
+    cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+    cx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+  }
+  new ResizeObserver(fit).observe(cv);
+
+  function level() { return Math.min(state.hits, 4); }
+  function readyBall() {
+    Object.assign(ball, { x: HAND.x + 2, y: HAND.y - R + 2, vx: 0, vy: 0, live: false, scored: false, rest: 0, touched: false });
+  }
+  readyBall();
+
+  function shout(big, small) {
+    const s = $("shout");
+    s.innerHTML = ""; s.append(document.createTextNode(big));
+    if (small) { const sm = document.createElement("small"); sm.textContent = small; s.append(sm); }
+    s.classList.add("on");
+    clearTimeout(shoutT); shoutT = setTimeout(() => s.classList.remove("on"), 1300);
+  }
+
+  function throwBall(vx, vy) {
+    if (ball.live || modal) return;
+    const sp = Math.hypot(vx, vy), max = 17;
+    if (sp > max) { vx *= max / sp; vy *= max / sp; }
+    Object.assign(ball, { vx, vy, live: true, spin: 0 });
+    jump = 1; state.shots++; save(); paintBoard();
+  }
+
+  function rimPoints() {
+    return [{ x: hoop.x - 30, y: hoop.y }, { x: hoop.x + 30, y: hoop.y }];
+  }
+  function collideCircle(px, py, rad, bounce) {
+    const dx = ball.x - px, dy = ball.y - py, d = Math.hypot(dx, dy), min = R + rad;
+    if (d < min && d > 0) {
+      const nx = dx / d, ny = dy / d;
+      ball.x = px + nx * min; ball.y = py + ny * min;
+      const dot = ball.vx * nx + ball.vy * ny;
+      if (dot < 0) { ball.vx -= (1 + bounce) * dot * nx; ball.vy -= (1 + bounce) * dot * ny; ball.vx *= .92; }
+      ball.touched = true;
+    }
+  }
+
+  function step() {
+    // кольцо двигается на поздних уровнях
+    const lv = level();
+    hoop.t += 1 / 60;
+    hoop.x = hoop.baseX + (lv >= 3 ? Math.sin(hoop.t * (lv >= 4 ? 1.5 : 1)) * 34 : 0) - (lv >= 3 ? 14 : 0);
+    hoop.y = hoop.baseY + (lv >= 4 ? Math.sin(hoop.t * 1.1 + 1) * 42 : 0) + (lv === 2 ? -30 : 0);
+    if (jump > 0) jump = Math.max(0, jump - 0.035);
+    if (net > 0) net = Math.max(0, net - 0.03);
+
+    if (!ball.live) return;
+    const prevY = ball.y;
+    ball.vy += G; ball.x += ball.vx; ball.y += ball.vy; ball.spin += ball.vx * 0.05;
+
+    // кольцо и щит
+    for (const p of rimPoints()) collideCircle(p.x, p.y, 3, 0.55);
+    const bx = hoop.x + 38, top = hoop.y - 86, bottom = hoop.y + 10;
+    if (ball.y > top && ball.y < bottom && ball.x + R > bx && ball.x < bx + 10 && ball.vx > 0) {
+      ball.x = bx - R; ball.vx *= -0.6; ball.touched = true;
+    }
+    // попадание: пересёк линию кольца сверху вниз между дужками
+    if (!ball.scored && prevY < hoop.y && ball.y >= hoop.y && ball.vy > 0 &&
+        ball.x > hoop.x - 30 + R * 0.35 && ball.x < hoop.x + 30 - R * 0.35) {
+      ball.scored = true; net = 1; onScore();
+    }
+    // стены и пол
+    if (ball.x < R) { ball.x = R; ball.vx *= -0.6; }
+    if (ball.y > FLOOR - R) {
+      ball.y = FLOOR - R; ball.vy *= -0.55; ball.vx *= 0.8;
+      if (Math.abs(ball.vy) < 1.2) ball.rest++;
+    }
+    if (ball.x > W + 60 || ball.rest > 12 || ball.y > H + 60) endShot();
+  }
+
+  let pendingCard = -1;
+  function onScore() {
+    const r = cv.getBoundingClientRect();
+    confetti(r.left + hoop.x / W * r.width, r.top + hoop.y / H * r.height, 90);
+    if (state.hits < 5) {
+      const i = state.hits;
+      state.hits++; save();
+      shout(HIT[i], ball.touched ? "С отскоком, но засчитано" : "Чистый свиш");
+      pendingCard = i;
+    } else {
+      shout(HIT[Math.random() * HIT.length | 0], "Свободная игра");
+    }
+    paintBoard(); paintLocker();
+  }
+  function endShot() {
+    ball.live = false;
+    if (!ball.scored) { const m = MISS[Math.random() * MISS.length | 0]; shout(m[0], m[1]); }
+    if (pendingCard >= 0) {
+      const i = pendingCard; pendingCard = -1;
+      const final = i === 4;
+      if (final) { const r = cv.getBoundingClientRect(); confetti(r.left + r.width / 2, r.top + r.height / 3, 220); }
+      setTimeout(() => openCard(i, final), 250);
+    }
+    setTimeout(readyBall, 250);
+  }
+
+  // ——— Прицел ———
+  function toLocal(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }; }
+  function aimVel() {
+    if (!aim) return null;
+    const k = 0.11;
+    return { vx: (aim.sx - aim.x) * k, vy: (aim.sy - aim.y) * k };
+  }
+  cv.addEventListener("pointerdown", e => {
+    if (ball.live || modal) return;
+    const p = toLocal(e);
+    aim = { sx: p.x, sy: p.y, x: p.x, y: p.y };
+    try { cv.setPointerCapture(e.pointerId); } catch {}
+  });
+  cv.addEventListener("pointermove", e => { if (aim) { const p = toLocal(e); aim.x = p.x; aim.y = p.y; } });
+  function release() {
+    if (!aim) return;
+    const v = aimVel(); aim = null;
+    if (Math.hypot(v.vx, v.vy) > 2) throwBall(v.vx, v.vy);
+  }
+  cv.addEventListener("pointerup", release);
+  cv.addEventListener("pointercancel", () => { aim = null; });
+
+  // клавиатура
+  let kbAim = false;
+  cv.addEventListener("keydown", e => {
+    if (ball.live || modal) return;
+    const keys = { ArrowLeft: () => kbAngle -= .04, ArrowRight: () => kbAngle += .04, ArrowUp: () => kbPower += .3, ArrowDown: () => kbPower -= .3 };
+    if (keys[e.key]) { e.preventDefault(); keys[e.key](); kbAngle = Math.max(-1.5, Math.min(-.1, kbAngle)); kbPower = Math.max(4, Math.min(17, kbPower)); kbAim = true; }
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); throwBall(Math.cos(kbAngle) * kbPower, Math.sin(kbAngle) * kbPower); kbAim = false; }
+  });
+  cv.addEventListener("blur", () => { kbAim = false; });
+
+  // ——— Рисование ———
+  function drawCourt() {
+    const g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#0A0D17"); g.addColorStop(.7, "#101628"); g.addColorStop(1, "#141B30");
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    // прожекторы
+    for (const [x, a] of [[70, .06], [330, .08]]) {
+      const l = cx.createRadialGradient(x, -30, 10, x, -30, 260);
+      l.addColorStop(0, `rgba(255,236,200,${a})`); l.addColorStop(1, "rgba(255,236,200,0)");
+      cx.fillStyle = l; cx.fillRect(0, 0, W, H);
+    }
+    // баннер на стене
+    cx.save(); cx.globalAlpha = .07; cx.fillStyle = "#F2F0E9";
+    cx.font = "400 64px 'Russo One', sans-serif"; cx.textAlign = "center";
+    cx.font = "400 54px 'Russo One', sans-serif";
+    cx.fillText("С ДНЮХОЙ", W / 2, 120); cx.fillText("ЛЕГЕНДА", W / 2, 180);
+    cx.restore();
+    // пол и разметка
+    cx.fillStyle = "#1A1F33"; cx.fillRect(0, FLOOR, W, H - FLOOR);
+    cx.strokeStyle = "rgba(242,116,43,.55)"; cx.lineWidth = 2;
+    cx.beginPath(); cx.moveTo(0, FLOOR); cx.lineTo(W, FLOOR); cx.stroke();
+  }
+  function drawHoop(front) {
+    const { x, y } = hoop;
+    if (!front) {
+      // щит
+      cx.fillStyle = "rgba(170,200,255,.16)"; cx.strokeStyle = "#E9EEF9"; cx.lineWidth = 2.5;
+      cx.beginPath(); cx.roundRect(x + 38, y - 86, 10, 96, 2); cx.fill(); cx.stroke();
+      cx.fillStyle = "#6C7896"; cx.fillRect(x + 48, y - 50, W, 6);   // крепление
+      return;
+    }
+    // сетка
+    const sway = Math.sin(net * 14) * net * 6, drop = net * 10;
+    cx.strokeStyle = "rgba(242,240,233,.85)"; cx.lineWidth = 1.4;
+    const topL = x - 30, topR = x + 30, botL = x - 17 + sway, botR = x + 17 + sway, botY = y + 44 + drop;
+    for (let i = 0; i <= 6; i++) {
+      const t = i / 6;
+      cx.beginPath(); cx.moveTo(topL + (topR - topL) * t, y + 2);
+      cx.lineTo(botL + (botR - botL) * (1 - t), botY); cx.stroke();
+      cx.beginPath(); cx.moveTo(topL + (topR - topL) * t, y + 2);
+      cx.lineTo(botL + (botR - botL) * t, botY); cx.stroke();
+    }
+    // обод
+    cx.strokeStyle = "#F2742B"; cx.lineWidth = 5; cx.lineCap = "round";
+    cx.beginPath(); cx.moveTo(x - 30, y); cx.lineTo(x + 38, y); cx.stroke();
+  }
+  function drawBall(bx, by, spin, alpha = 1) {
+    cx.save(); cx.globalAlpha = alpha; cx.translate(bx, by); cx.rotate(spin);
+    const g = cx.createRadialGradient(-4, -5, 2, 0, 0, R);
+    g.addColorStop(0, "#FF9A55"); g.addColorStop(1, "#D95A17");
+    cx.fillStyle = g; cx.beginPath(); cx.arc(0, 0, R, 0, 6.283); cx.fill();
+    cx.strokeStyle = "#241208"; cx.lineWidth = 1.6;
+    cx.beginPath(); cx.arc(0, 0, R, 0, 6.283); cx.stroke();
+    cx.beginPath(); cx.moveTo(-R, 0); cx.lineTo(R, 0); cx.moveTo(0, -R); cx.lineTo(0, R); cx.stroke();
+    cx.beginPath(); cx.arc(-R * 1.25, 0, R * .9, -.85, .85); cx.stroke();
+    cx.beginPath(); cx.arc(R * 1.25, 0, R * .9, Math.PI - .85, Math.PI + .85); cx.stroke();
+    cx.restore();
+  }
+  function drawPlayer(t) {
+    if (!player.complete || !player.naturalWidth) return;
+    const bob = ball.live ? 0 : Math.sin(t / 380) * 2.5;
+    const lift = Math.sin(jump * Math.PI) * 26;
+    // тень
+    cx.fillStyle = "rgba(0,0,0,.45)";
+    cx.beginPath(); cx.ellipse(PX + 95, FLOOR + 4, 60 - lift * .6, 7, 0, 0, 6.283); cx.fill();
+    cx.save();
+    cx.globalCompositeOperation = "lighten";          // чёрный фон картинки растворяется в тёмном зале
+    cx.drawImage(player, PX, PY + bob - lift, 420 * PS, 870 * PS);
+    cx.restore();
+    return bob - lift;
+  }
+  function drawAim() {
+    let v = null;
+    if (aim) v = aimVel();
+    else if (kbAim) v = { vx: Math.cos(kbAngle) * kbPower, vy: Math.sin(kbAngle) * kbPower };
+    if (!v || Math.hypot(v.vx, v.vy) < 1) return;
+    const sp = Math.hypot(v.vx, v.vy); if (sp > 17) { v.vx *= 17 / sp; v.vy *= 17 / sp; }
+    const steps = [46, 30, 20, 16, 12][level()];
+    let x = ball.x, y = ball.y, vx = v.vx, vy = v.vy;
+    for (let i = 1; i <= steps; i++) {
+      vy += G; x += vx; y += vy;
+      if (i % 3 === 0) {
+        cx.fillStyle = `rgba(255,181,71,${1 - i / steps * .85})`;
+        cx.beginPath(); cx.arc(x, y, 3.2 - i / steps * 1.6, 0, 6.283); cx.fill();
+      }
+    }
+    // индикатор силы
+    const pw = Math.min(1, sp / 17);
+    cx.fillStyle = "rgba(5,7,12,.7)"; cx.fillRect(16, FLOOR - 176, 8, 120);
+    cx.fillStyle = pw > .85 ? "#F2742B" : "#FFB547"; cx.fillRect(16, FLOOR - 56 - 120 * pw, 8, 120 * pw);
+  }
+  function drawIntro(t) {
+    if (state.shots || aim || kbAim || ball.live) return;
+    // подсказка-рука: тянем от мяча вниз-влево
+    const k = (t / 1400) % 1, ease = k < .6 ? k / .6 : 1;
+    const x = ball.x + 30 - ease * 60, y = ball.y + 40 + ease * 60;
+    cx.save(); cx.globalAlpha = k < .8 ? .9 : (1 - k) * 4.5;
+    cx.strokeStyle = "rgba(255,181,71,.6)"; cx.setLineDash([4, 5]); cx.lineWidth = 2;
+    cx.beginPath(); cx.moveTo(ball.x + 30, ball.y + 40); cx.lineTo(x, y); cx.stroke();
+    cx.setLineDash([]); cx.fillStyle = "#FFB547";
+    cx.beginPath(); cx.arc(x, y, 9, 0, 6.283); cx.fill();
+    cx.fillStyle = "#1A0E05"; cx.font = "700 12px Onest, sans-serif"; cx.textAlign = "center"; cx.fillText("тяни", x, y + 26 > FLOOR ? y - 16 : y + 26);
+    cx.restore();
+  }
+
+  let last = performance.now(), acc = 0;
+  function frame(now) {
+    acc += Math.min(100, now - last); last = now;
+    while (acc >= 1000 / 60) { step(); acc -= 1000 / 60; }
+    drawCourt();
+    drawHoop(false);
+    const off = drawPlayer(now) || 0;
+    if (!ball.live) { ball.y = HAND.y - R + 2 + off; }
+    drawBall(ball.x, ball.y, ball.spin);
+    drawHoop(true);
+    drawAim();
+    drawIntro(now);
+    requestAnimationFrame(frame);
+  }
+  fit();
+  requestAnimationFrame(frame);
+
+  // ——— Кнопки ———
+  $("skip").onclick = () => {
+    state.hits = Math.max(state.hits, 5); save(); paintBoard(); paintLocker();
+    $("lockerTitle").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+  };
+  $("reset").onclick = () => { state = { hits: 0, shots: 0 }; save(); readyBall(); paintBoard(); paintLocker(); cv.focus(); };
+
+  paintBoard(); paintLocker();
+})();
+</script>
+</body>
+</html>
